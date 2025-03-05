@@ -3,4 +3,3 @@ sp: sp.o pq.o
 
 sp.o: sp.h
 pq.o: sp.h
-

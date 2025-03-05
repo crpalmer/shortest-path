@@ -61,7 +61,29 @@
  *       If the debug level is less than 10 (and greater than 0) then
  *       the dist array will be shown once it has been fully calculated.
  *
+ * -------------------------------------------------------------------------
+ *
+ * After having participated in several arguments about shortest paths
+ * in the newgroup rec.games.programmer, I've decided to add a simple
+ * heuristic function to this algorithm.
+ *
+ * If you run the program with the options -a and -h you'll be essentially
+ * running an A* algorithm which should find a shortest path very quickly.
+ *
+ * The heuristic is a grid distance where moving on a diagonal has the same
+ * cost as moving in any other direction.  The function is the greater
+ * of the x distance and the y distance.
+ *
+ * To change the last version of the code to support a heuristic, I had
+ * include the function itself and then change 2 lines of code.
+ * At the same time, I added the ability to stop processing when the
+ * destination had been reached which required one if statement.  Thus,
+ * to add the heuristic required about 4 lines of code.
+ *
+ * ------------------------------------------------------------------------
+ *
  * Comments:  crpalmer@undergrad.math.uwaterloo.ca
+ * Date    :  November 15, 1995.
  *
  **************************************************************************/
 
@@ -69,6 +91,21 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "sp.h"
+
+/* The following two flags can be used to speed up the algorithm.  The
+ * use_heuristic flag will estimate the distance from a node to the
+ *   destination when it is added to the priority queue.
+ * abort_at_dest will stop calculating shortest paths when it has found
+ *   one to the destination node.
+ *
+ * By setting both of these two a non-zero value, you will see a very
+ * fast way of generating a single path between two points on the map.
+ * The search will be directed toward the destination by using the heuristic
+ * and we'll stop once we've found a node.
+ * Simply setting the use_heuristic and no other value won't do you much good.
+ */
+static int use_heuristic = 0;		/* don't use a heuristic */
+static int abort_at_dest = 0;		/* don't abort at destination */
 
 /* Normally you would allocate buffers for dist[][] and parent[][] and
  * limit the total length of the search to some reasonable distance.
@@ -97,7 +134,7 @@ int parent[MAX_R][MAX_C][2];
 int startr, startc;
 int endr, endc;
 int rows_read, cols_read;
-int pops;
+int pops, pushes;
 int debug_level = 0;
 extern int max_memory;
 
@@ -233,6 +270,23 @@ char line[256];
     fgets(line, sizeof(line), stdin);
 }
 
+#ifdef max
+#undef max
+#endif
+#ifdef abs
+#undef abs
+#endif
+
+#define max(a,b) ((a) > (b) ? (a) : (b))
+#define abs(a)   ((a) < 0 ? -(a) : (a))
+
+static int
+h(int r1, int c1, int r2, int c2)
+{
+    if (use_heuristic) return(max(abs(r2 - r1), abs(c2 - c1)));
+    return(0);
+}
+
 /**************************************************************************
  *
  * (void) build_path()
@@ -262,7 +316,8 @@ int	 i;
     dist[startr][startc] = 0;
     parent[startr][startc][0] = -1;
     parent[startr][startc][1] = -1;
-    pqueue_insert(pq, startr, startc, 0);
+    pqueue_insert(pq, startr, startc, 0 + h(startr,startc,endr,endc));
+    pushes++;
 
     while (pqueue_popmin(pq, &row, &col) == 0) {
 	/* DEBUG INFORMATION */
@@ -270,6 +325,11 @@ int	 i;
 	if (debug_level > 0)
     	    printf("\nSelected (row,col)=(%d,%d).  Adding:\n", row, col);
 
+	/* See if we only wanted the one path */
+	if (abort_at_dest && row == endr && col == endc) {
+		/* STOP HERE */
+		break;
+	}
 	/* FOREACH square adjacent to (row,col), call it drow(row,i), dcol(col,i) */
 	for (i = 0; i < 8; i++) {
 	    /* Check to make sure the square is on the map */
@@ -291,7 +351,8 @@ int	 i;
 		parent[drow(row,i)][dcol(col,i)][0] = row;
 		parent[drow(row,i)][dcol(col,i)][1] = col;
 		/* Push the modified square onto the priority queue */
-		pqueue_insert(pq, drow(row,i), dcol(col,i), dist[drow(row,i)][dcol(col,i)]);
+		pqueue_insert(pq, drow(row,i), dcol(col,i), dist[drow(row,i)][dcol(col,i)] + h(drow(row, i), dcol(col, i), endr, endc));
+		pushes++;
 	    } else if (debug_level >= 5) {
 		printf("\t\t(%d,%d) Weight Stays: %d (would have been %d)\n", drow(row,i), dcol(col,i), dist[drow(row,i)][dcol(col,i)], dist[row][col] + map[drow(row,i)][dcol(col,i)]);
 	    }
@@ -344,28 +405,45 @@ int
 main(int argc, char ** argv)
 {
     char tmp_str[128];
+int  i;
 
-    if (argc > 3 || argc == 1) {
-	printf("USAGE: sp [-d<level>] [map filename]\n");
-	return(2);
-    }
-    if (argv[1][0] == '-' && argv[1][1] == 'd') {
-	debug_level = atoi(&argv[1][2]);
-	if (debug_level <= 0) debug_level = 1;
-        argv[1] = argv[2];
-	argc--;
+    for (i = 1; i < argc; i++) {
+	if (argv[i][0] != '-') break;
+	switch(argv[i][1]) {
+	case 'a':
+		abort_at_dest++;
+		break;
+
+	case 'd':
+		debug_level = atoi(&argv[1][2]);
+		if (debug_level <= 0) debug_level = 1;
+		break;
+	case 'h':
+		use_heuristic++;
+		break;
+	default:
+usage:
+		printf("USAGE: sp [-a] [-d<level>] [-h] [map filename]\n");
+		printf("       -a       : Stop when we have a path to the destination.\n");
+		printf("       -d<level>: Set the debug level.\n");
+		printf("       -h       : Apply a heuristic to direct the search.\n");
+		return(2);
+	}
     }
 
-    map_read(argv[1]);
+    if (i >= argc) goto usage;
+
+    map_read(argv[i]);
     printf("Enter 4 integers: starting row, starting column, ending row, ending column\n");
     if (scanf("%d %d %d %d", &startr, &startc, &endr, &endc) != 4) return(0);
     fgets(tmp_str, sizeof(tmp_str), stdin);
     pops = 0;
+    pushes = 0;
     build_path();
     if (debug_level < 10 && debug_level > 0) build_illustrate();
     limit_path();
     map_draw_path();
-    printf ("We required 2x %d queue operations\n", pops);
+    printf ("We required 2x %d/%d (pushes/pops) queue operations\n", pushes, pops);
     printf ("N = rows x cols = %d x %d = %d\n", rows_read, cols_read, rows_read * cols_read);
     printf ("Maximum memory consummed in the priority queue = %d\n", max_memory);
     return(0);
