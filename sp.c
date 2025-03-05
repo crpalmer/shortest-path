@@ -230,7 +230,7 @@ char line[256];
 	printf("\n");
     }
     printf("\nHIT ENTER:"); fflush(stdout);
-    gets(line);
+    fgets(line, sizeof(line), stdin);
 }
 
 /**************************************************************************
@@ -343,7 +343,7 @@ int tmp;
 int
 main(int argc, char ** argv)
 {
-char tmp_str[128];
+    char tmp_str[128];
 
     if (argc > 3 || argc == 1) {
 	printf("USAGE: sp [-d<level>] [map filename]\n");
@@ -359,7 +359,7 @@ char tmp_str[128];
     map_read(argv[1]);
     printf("Enter 4 integers: starting row, starting column, ending row, ending column\n");
     if (scanf("%d %d %d %d", &startr, &startc, &endr, &endc) != 4) return(0);
-    gets(tmp_str);
+    fgets(tmp_str, sizeof(tmp_str), stdin);
     pops = 0;
     build_path();
     if (debug_level < 10 && debug_level > 0) build_illustrate();
