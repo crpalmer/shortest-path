@@ -434,6 +434,7 @@ usage:
     if (i >= argc) goto usage;
 
     map_read(argv[i]);
+    printf("Read a %d x %d map.\n", rows_read, cols_read);
     printf("Enter 4 integers: starting row, starting column, ending row, ending column\n");
     if (scanf("%d %d %d %d", &startr, &startc, &endr, &endc) != 4) return(0);
     fgets(tmp_str, sizeof(tmp_str), stdin);
