@@ -22,7 +22,7 @@ size_t current_memory = 0;
 void *
 my_malloc(size_t size)
 {
-void * ptr;
+    void *ptr;
 
     if ((ptr = malloc(size)) == NULL) return(NULL);
     current_memory += size;
@@ -40,7 +40,7 @@ my_free(void * ptr, size_t size)
 PQUEUE *
 pqueue_new(void)
 {
-PQUEUE * pq;
+    PQUEUE *pq;
 
     if ((pq = (PQUEUE *) my_malloc(sizeof(PQUEUE))) == NULL) return (NULL);
     pq->count = 0;
@@ -51,8 +51,8 @@ PQUEUE * pq;
 int
 pqueue_insert(PQUEUE * pq, int row, int col, int wt)
 {
-ELIST * e;
-PLIST * p, * pp;
+    ELIST *e;
+    PLIST *p, *pp;
 
     if (pq == NULL) return(-1); 
 
@@ -104,8 +104,8 @@ pqueue_peekmin(PQUEUE * pq, int * row, int * col)
 int
 pqueue_popmin(PQUEUE * pq, int * row, int * col)
 {
-ELIST * tmpe;
-PLIST * tmpp;
+    ELIST *tmpe;
+    PLIST *tmpp;
 
     if (pqueue_peekmin(pq, row, col) < 0) return(-1);
     pq->count--;

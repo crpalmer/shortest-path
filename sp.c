@@ -154,9 +154,9 @@ extern int max_memory;
 int
 map_read(char * fname)
 {
-FILE * file;
-int    row, col;
-char   line[MAX_C*2+1], * line_ptr;
+     FILE *file;
+     int row, col;
+     char line[MAX_C*2+1], * line_ptr;
 
     if ((file = fopen(fname, "r")) == NULL) return(-1);
 
@@ -204,8 +204,8 @@ char   line[MAX_C*2+1], * line_ptr;
 void
 map_draw_path(void)
 {
-int row, col;
-int wt;
+    int row, col;
+    int wt;
 
     wt = 0;
     for (row = 0; row < rows_read; row++) {
@@ -255,8 +255,8 @@ int delta[8][2] = { -1, -1, -1, 1, 1, -1, 1, 1, -1, 0, 0, 1, 1, 0, 0, -1 };
 void
 build_illustrate(void)
 {
-int i, j;
-char line[256];
+    int i, j;
+    char line[256];
 
     for (i = 0; i < rows_read; i++) {
 	for (j = 0; j < cols_read; j++)
@@ -306,9 +306,9 @@ h(int r1, int c1, int r2, int c2)
 void
 build_path(void)
 {
-PQUEUE * pq;
-int      row, col;
-int	 i;
+    PQUEUE *pq;
+    int row, col;
+    int	i;
 
     pq = pqueue_new();
     if (startr < 0 || startr >= rows_read || startc < 0 || startc >= cols_read)
@@ -379,8 +379,8 @@ int	 i;
 void
 limit_path(void)
 {
-int row, col;
-int tmp;
+    int row, col;
+    int tmp;
 
     if (endr < 0 || endr >= rows_read || endc < 0 || endc >= cols_read) return;
     row = endr;
@@ -405,7 +405,7 @@ int
 main(int argc, char ** argv)
 {
     char tmp_str[128];
-int  i;
+    int  i;
 
     for (i = 1; i < argc; i++) {
 	if (argv[i][0] != '-') break;
